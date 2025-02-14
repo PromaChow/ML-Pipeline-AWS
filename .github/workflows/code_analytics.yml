@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -22,26 +25,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install radon lizard pylint mccabe xenon pycodestyle cognitive-complexity cloc scc
 
+      - name: Check Python Files
+        run: |
+          echo "Found Python files:"
+          find . -type f -name "*.py" -not -path "*/.*"
+
       # Basic metrics with Radon
       - name: Analyze with Radon
         run: |
           mkdir -p metrics
           echo "=== Cyclomatic Complexity ===" > metrics_report.txt
-          find . -name "*.py" | xargs radon cc --show-complexity --average >> metrics_report.txt || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon cc --show-complexity --average >> metrics_report.txt || true
 
           echo -e "\n=== Maintainability Index ===" >> metrics_report.txt
-          find . -name "*.py" | xargs radon mi --show >> metrics_report.txt || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon mi --show >> metrics_report.txt || true
 
           echo -e "\n=== Raw Metrics ===" >> metrics_report.txt
-          find . -name "*.py" | xargs radon raw --summary >> metrics_report.txt || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon raw --summary >> metrics_report.txt || true
 
           echo -e "\n=== Halstead Metrics ===" >> metrics_report.txt
-          find . -name "*.py" | xargs radon hal >> metrics_report.txt || true
-
-      - name: Check Python Files
-        run: |
-          echo "Found Python files:"
-          find "$(git rev-parse --show-toplevel)" -type f -name "*.py" -not -path "*/.*"
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon hal >> metrics_report.txt || true
 
       - name: Run Lizard Analysis
         run: |
@@ -52,21 +55,21 @@ jobs:
       - name: Analyze with Pylint
         run: |
           echo -e "\n=== Code Quality Metrics ===" >> metrics_report.txt
-          find . -name "*.py" -not -path "*/\.*" -exec pylint --output-format=text {} + >> metrics_report.txt || true
+          find . -type f -name "*.py" -not -path "*/.*" -exec pylint --output-format=text {} + >> metrics_report.txt || true
 
       # Xenon for threshold checking
       - name: Check complexity thresholds with Xenon
         run: |
           echo -e "\n=== Complexity Thresholds ===" >> metrics_report.txt
-          xenon --max-absolute A --max-modules A --max-average A . || true >> metrics_report.txt
+          xenon --max-absolute A --max-modules A --max-average A . >> metrics_report.txt || true
 
       # Generate detailed report in multiple formats
       - name: Generate detailed reports
         run: |
           # JSON reports
-          radon cc . --json > metrics/complexity.json || true
-          radon raw . --json > metrics/raw_metrics.json || true
-          radon hal . --json > metrics/halstead.json || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon cc --json > metrics/complexity.json || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon raw --json > metrics/raw_metrics.json || true
+          find . -type f -name "*.py" -not -path "*/.*" | xargs --no-run-if-empty radon hal --json > metrics/halstead.json || true
           lizard . --xml > metrics/lizard_report.xml || true
           cp metrics_report.txt metrics/full_report.txt
 
@@ -79,8 +82,9 @@ jobs:
       - name: Convert JSON to CSV
         if: always()
         run: |
-          if [ -f /tmp/eco-ci/total-data.json ]; then
-            jq -r '(.[0] | keys_unsorted) as $keys | $keys, map([.[ $keys[] ]])[] | @csv' /tmp/eco-ci/total-data.json > eco_results.csv
+          JSON_FILE="/tmp/eco-ci/total-data.json"
+          if [ -f "$JSON_FILE" ]; then
+            jq -r '(.[0] | keys_unsorted) as $keys | $keys, map([.[ $keys[] ]])[] | @csv' "$JSON_FILE" > eco_results.csv
           else
             echo "No JSON output found, skipping conversion."
           fi
