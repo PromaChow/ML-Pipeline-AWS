@@ -41,8 +41,7 @@ jobs:
       - name: Check Python Files
         run: |
           echo "Found Python files:"
-          find . -name "*.py" -not -path "*/\.*"
-
+          find . -name "*.py
       - name: Run Lizard Analysis
         run: |
           echo -e "\n=== Detailed Code Metrics ===" >> metrics_report.txt
