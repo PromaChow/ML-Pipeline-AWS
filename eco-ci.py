@@ -74,7 +74,7 @@ def write_yaml_with_header(file, data):
     yaml.dump(data, file, Dumper=MyDumper, default_flow_style=False)
 
 input_file = ".github/workflows/aws_pipeline.yml"  
-output_file = ".github/workflows/eco_aws_pipeline.yml"
+output_file = ".github/workflows/aws_pipeline.yml"
 
 # Read YAML file
 with open(input_file, "r") as file:
