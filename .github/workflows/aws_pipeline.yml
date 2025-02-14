@@ -38,7 +38,7 @@ jobs:
         with:
           task: get-measurement
           label: 'Data Preprocessing'
-          json-output: true  # Enable JSON output
+          json-output: true  
 
       - name: Train model
         run: python src/train_model.py
