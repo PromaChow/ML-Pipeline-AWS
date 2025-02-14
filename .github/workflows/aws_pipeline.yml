@@ -8,8 +8,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
+      - name: Start Energy Measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: start-measurement
+          json-output: true  # Enable JSON output
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -26,8 +32,46 @@ jobs:
       - name: Preprocess data
         run: python src/preprocess.py
 
+      - name: Record Measurement After Preprocessing
+        id: preprocess-measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: get-measurement
+          label: 'Data Preprocessing'
+          json-output: true  # Enable JSON output
+
       - name: Train model
         run: python src/train_model.py
 
+      - name: Record Measurement After Training
+        id: train-measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: get-measurement
+          label: 'Model Training'
+          json-output: true  # Enable JSON output
+
       - name: Deploy model
         run: python src/deploy_model.py
+
+      - name: Record Measurement After Deployment
+        id: deploy-measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: get-measurement
+          label: 'Model Deployment'
+          json-output: true  # Enable JSON output
+
+      - name: Display Energy Results
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: display-results
+          json-output: true  # Enable JSON output
+
+      - name: Upload Energy Measurement Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: energy-measurements
+          path: |
+            /tmp/eco-ci/lap-data.json
+            /tmp/eco-ci/total-data.json
