@@ -29,6 +29,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Record Measurement After Setup
+        id: setup-measurement
+        uses: green-coding-solutions/eco-ci-energy-estimation@v4
+        with:
+          task: get-measurement
+          label: 'Setup and Dependencies Installation'
+          json-output: true  # Enable JSON output
+
       - name: Preprocess data
         run: python src/preprocess.py
 
@@ -38,13 +46,13 @@ jobs:
         with:
           task: get-measurement
           label: 'Data Preprocessing'
-          json-output: true  
+          json-output: true  # Enable JSON output
 
       - name: Train model
         run: python src/train_model.py
 
       - name: Record Measurement After Training
-        id: train-measurement
+        id: training-measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         with:
           task: get-measurement
@@ -55,7 +63,7 @@ jobs:
         run: python src/deploy_model.py
 
       - name: Record Measurement After Deployment
-        id: deploy-measurement
+        id: deployment-measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         with:
           task: get-measurement
@@ -63,15 +71,12 @@ jobs:
           json-output: true  # Enable JSON output
 
       - name: Display Energy Results
+        id: final-measurement
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         with:
           task: display-results
           json-output: true  # Enable JSON output
 
-      - name: Upload Energy Measurement Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: energy-measurements
-          path: |
-            /tmp/eco-ci/lap-data.json
-            /tmp/eco-ci/total-data.json
+      - name: Output Total Energy Consumption as JSON
+        run: |
+          echo "Total Energy Consumption Data: ${{ steps.final-measurement.outputs.data-total-json }}"
