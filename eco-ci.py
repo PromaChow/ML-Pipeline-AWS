@@ -1,10 +1,9 @@
 import yaml
-import sys
+import os
 
 def add_eco_ci_steps(yaml_data):
     modified_yaml_data = yaml_data.copy()
     
-    # Fix the 'on' key if it was converted to True
     if True in modified_yaml_data:
         modified_yaml_data['on'] = modified_yaml_data[True]
         del modified_yaml_data[True]
@@ -12,14 +11,12 @@ def add_eco_ci_steps(yaml_data):
     for job_name, job in modified_yaml_data.get("jobs", {}).items():
         steps = job.setdefault("steps", [])
         
-        # Insert the start measurement step at the beginning
         steps.insert(0, {
             "name": "Start Energy Measurement",
             "uses": "green-coding-solutions/eco-ci-energy-estimation@v4",
             "with": {"task": "start-measurement", "json-output": True}
         })
         
-        # Insert measurement steps after each run step
         new_steps = []
         for step in steps:
             new_steps.append(step)
@@ -31,7 +28,6 @@ def add_eco_ci_steps(yaml_data):
                     "with": {"task": "get-measurement", "label": step.get('name', 'Step'), "json-output": True}
                 })
         
-        # Add final measurement and artifact upload
         new_steps.append({
             "name": "Display Energy Results",
             "id": "display-measurement",
@@ -57,33 +53,36 @@ class MyDumper(yaml.Dumper):
         return super(MyDumper, self).increase_indent(flow, False)
 
 def write_yaml_with_header(file, data):
-    # Write the header manually first
     file.write("name: AWS ML Pipeline\n")
     file.write("on:\n")
     file.write("  push:\n")
     file.write("    branches:\n")
     file.write("      - main\n\n")
     
-    # Remove these keys from data before dumping
     if 'name' in data:
         del data['name']
     if 'on' in data:
         del data['on']
     
-    # Dump the rest of the data
     yaml.dump(data, file, Dumper=MyDumper, default_flow_style=False)
 
-input_file = ".github/workflows/aws_pipeline.yml"  
-output_file = ".github/workflows/aws_pipeline.yml"
+def process_all_yaml_files(directory):
+    for filename in os.listdir(directory):
+        if filename.endswith(".yml"):
+            filepath = os.path.join(directory, filename)
+            
+            with open(filepath, "r") as file:
+                yaml_data = yaml.safe_load(file)
+            
+            yaml_data = add_eco_ci_steps(yaml_data)
+            
+            with open(filepath, "w") as file:
+                write_yaml_with_header(file, yaml_data)
+            
+            print(f"Modified YAML file saved as {filepath}")
 
-# Read YAML file
-with open(input_file, "r") as file:
-    yaml_data = yaml.safe_load(file)
-
-yaml_data = add_eco_ci_steps(yaml_data)
-
-# Write the modified YAML
-with open(output_file, "w") as file:
-    write_yaml_with_header(file, yaml_data)
-
-print(f"Modified YAML file saved as {output_file}")
+workflow_directory = ".github/workflows/"
+if os.path.exists(workflow_directory):
+    process_all_yaml_files(workflow_directory)
+else:
+    print(f"Directory {workflow_directory} not found.")
