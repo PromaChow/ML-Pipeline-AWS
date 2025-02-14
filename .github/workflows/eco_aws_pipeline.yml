@@ -112,7 +112,7 @@ jobs:
         with:
           name: total-energy-consumption
           path: total_energy_consumption.json
-      - id: final-measurement
+      - id: display-measurement
         name: Display Energy Results
         uses: green-coding-solutions/eco-ci-energy-estimation@v4
         with:

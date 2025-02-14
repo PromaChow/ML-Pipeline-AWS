@@ -34,7 +34,7 @@ def add_eco_ci_steps(yaml_data):
         # Add final measurement and artifact upload
         new_steps.append({
             "name": "Display Energy Results",
-            "id": "final-measurement",
+            "id": "display-measurement",
             "uses": "green-coding-solutions/eco-ci-energy-estimation@v4",
             "with": {"task": "display-results", "json-output": True}
         })
