@@ -12,15 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      - name: Start Energy Measurement
-        uses: green-coding-solutions/eco-ci-energy-estimation@v4
-        with:
-          task: start-measurement
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -84,12 +75,6 @@ jobs:
         with:
           name: code-metrics
           path: metrics/
-
-      - name: Display Energy Results
-        uses: green-coding-solutions/eco-ci-energy-estimation@v4
-        with:
-          task: display-results
-          json-output: true
 
       - name: Convert JSON to CSV
         if: always()
