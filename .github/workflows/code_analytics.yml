@@ -41,7 +41,8 @@ jobs:
       - name: Check Python Files
         run: |
           echo "Found Python files:"
-          find . -name "*.py
+          find "$(git rev-parse --show-toplevel)" -type f -name "*.py" -not -path "*/.*"
+
       - name: Run Lizard Analysis
         run: |
           echo -e "\n=== Detailed Code Metrics ===" >> metrics_report.txt
